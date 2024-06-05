@@ -1,0 +1,12 @@
+{
+    "name": "alod",
+    "displayName": "A Lot of Damage!",
+    "subtitle": "Neuron activation.",
+    "author": "Slotterleet",
+    "main": "alod.ALODMod",
+    "description": "A Mindustry mod for showing damage numbers.",
+    "version": "1.0.0",
+    "minGameVersion": 146,
+    "java": true,
+    "hidden": true
+}

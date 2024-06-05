@@ -1,26 +1,45 @@
-name: Build Mod
+name: Commit Testing
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   buildJar:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up PATH
-      run: |
-        echo "${ANDROID_HOME}/build-tools/34.0.0" >> $GITHUB_PATH
-    - name: Set up JDK 17
-      uses: actions/setup-java@v1
-      with:
-        java-version: 17
-    - name: Build mod jar
-      run: |
-        chmod +x ./gradlew
-        ./gradlew deploy
-    - name: Upload built jar file
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{ github.event.repository.name }}
-        path: build/libs/${{ github.event.repository.name }}.jar
+      - uses: actions/checkout@v2
+      - name: Set up PATH
+        run: |
+          echo "${ANDROID_HOME}/build-tools/34.0.0" >> $GITHUB_PATH
+      - name: Set up JDK 17
+        uses: actions/setup-java@v1
+        with:
+          java-version: 17
+      - name: Build mod jar
+        run: ./gradlew deploy
+      - name: Upload built jar file
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ github.event.repository.name }}
+          path: build/libs/${{ github.event.repository.name }}.jar
+      - name: Make a tag name
+        if: github.ref == 'refs/heads/master'
+        run: |
+          echo "::set-output name=tag::$(jq '.version' mod.json -r)"
+        id: tag_make
+      - name: Create blank release
+        if: github.ref == 'refs/heads/master'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run:
+          gh release create -t "A Lof of Damage!" "${{ steps.tag_make.outputs.tag }}"
+      #    - name: Check mod version
+      #      if: github.ref == 'refs/heads/master'
+      #      run: |
+      #        echo "${{ steps.tag_make.outputs.tag }}"
+      - name: Add jar into release
+        uses: softprops/action-gh-release@v1
+        if: github.ref == 'refs/heads/master'
+        with:
+          tag_name: ${{ steps.tag_make.outputs.tag }}
+          files: build/libs/${{ github.event.repository.name }}.jar
