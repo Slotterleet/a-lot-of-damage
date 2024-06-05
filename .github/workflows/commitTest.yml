@@ -32,7 +32,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run:
-          gh release create -t "A Lof of Damage!" "${{ steps.tag_make.outputs.tag }}"
+          gh release create -t "A Lot of Damage!" "${{ steps.tag_make.outputs.tag }}"
       #    - name: Check mod version
       #      if: github.ref == 'refs/heads/master'
       #      run: |
