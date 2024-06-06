@@ -1,6 +1,6 @@
 package alod;
 
-import arc.*;
+import arc.Events;
 import arc.graphics.Color;
 import arc.graphics.g2d.*;
 import arc.math.Mathf;
@@ -61,10 +61,11 @@ public class DamageDisplay {
             TextureRegion r = forDraw.getRegion();
             Draw.rect(r, e.x, e.y, r.width * realScale / 2f, r.height * realScale / 2f);
         }
-        Fonts.def.draw(Strings.fixed(damage, 0), e.x + (forDraw == null ? 0f : forDraw.getRegion().width * realScale / 4f),
+        Fonts.def.draw(Strings.fixed(damage, damage < 50 ? 1 : 0), e.x + (forDraw == null ? 0f : forDraw.getRegion().width * realScale / 4f),
             e.y + (forDraw == null ? 0f : forDraw.getRegion().height * realScale / 4f), Draw.getColor(), realScale, false, Align.left);
-        // hello again meep
-        if (bullet != null && bullet.owner instanceof Building b && b.block.name.equals("prog-mats-caliber") && damage > bullet.type.damage) {
+
+        // use a string containing word "crit" as bullet data for that satisfying "CRITICAL HIT!!!" text.
+        if (bullet != null && bullet.data instanceof String s && s.contains("crit")) {
             var critColor = new Color(e.fin(), e.fout(), 0, e.fout());
             Fonts.def.draw("CRITICAL", e.x, e.y - 16f,
                 critColor, 1f, false, Align.center);
@@ -88,7 +89,7 @@ public class DamageDisplay {
             float prev = units.get(e.unit, 0f);
             if (prev <= 0f) return;
 
-            int dmg = Mathf.round(prev - (e.unit.health + e.unit.shield));
+            float dmg = prev - (e.unit.health + e.unit.shield);
             showDamage(dmg, e.bullet, e.unit);
             units.increment(e.unit, 0f, -(prev - (e.unit.health + e.unit.shield)));
             //remove a killed unit
@@ -96,27 +97,7 @@ public class DamageDisplay {
                 units.remove(e.unit, 0f);
             }
         });
-        Events.on(BuildDamageEvent.class, e -> {
-            //if a building is invincible, just show 0 damage, as simple as that.
-            if (e.build.health == Float.POSITIVE_INFINITY) {
-                showZero(e.build);
-                return;
-            }
 
-            float prev = buildings.get(e.build, 0f);
-            if (prev <= 0f) return;
-
-            int dmg = Mathf.round(prev - e.build.health);
-            showDamage(dmg, e.source, e.build);
-            buildings.increment(e.build, 0f, -(prev - e.build.health));
-            //remove a destroyed building
-            if (buildings.get(e.build, 0f) <= 0f) {
-                buildings.remove(e.build, 0f);
-            }
-        });
-    }
-
-    public DamageDisplay() {
         Events.on(StateChangeEvent.class, e -> {
             if (e.to != GameState.State.playing || e.from == GameState.State.paused) return;
             buildings = null;
@@ -131,9 +112,10 @@ public class DamageDisplay {
                 buildings.each(b -> {
                     //make sure to track heals
                     if (b.key.health > b.value) {
-                        showHeal(Mathf.round(b.key.health - b.value), b.key);
+                        showHeal(b.key.health - b.value, b.key);
                         buildings.increment(b.key, 0f, b.key.health - b.value);
                     } else if (b.key.health < b.value) {
+                        // TODO: somehow handle DoT better.
                         buildings.increment(b.key, 0f, b.key.health - b.value);
                     }
                 });
@@ -148,7 +130,7 @@ public class DamageDisplay {
             units.each(u -> {
                 //make sure to track heals
                 if (u.key.health > u.value) {
-                    showHeal(Mathf.round(u.key.health - u.value), u.key);
+                    showHeal(u.key.health - u.value, u.key);
                     units.increment(u.key, 0f, u.key.health - u.value);
                 } else if ((u.key.health + u.key.shield) < u.value) {
                     units.increment(u.key, 0f, (u.key.health + u.key.shield) - u.value);
@@ -165,14 +147,37 @@ public class DamageDisplay {
             if (b != null) {
                 if (e.breaking) {
                     buildings.remove(b, 0f);
-                    Log.debug("[ALOD] [red]Removed[] building of type @, @ builds total", b.block.name, buildings.size);
                 } else {
                     buildings.put(b, b.health);
                     Log.debug("[ALOD] [green]Added[] building of type @, @ builds total", b.block.name, buildings.size);
                 }
             }
         });
+
+        Events.on(BuildDamageEvent.class, e -> {
+            //if a building is invincible, just show 0 damage, as simple as that.
+            if (e.build.health == Float.POSITIVE_INFINITY) {
+                showZero(e.build);
+                return;
+            }
+
+            float prev = buildings.get(e.build, 0f);
+            if (prev <= 0f) return;
+
+            float dmg = prev - e.build.health;
+            showDamage(dmg, e.source, e.build);
+
+            buildings.increment(e.build, 0f, -(prev - e.build.health));
+            //remove a destroyed building
+            if (buildings.get(e.build, 0f) <= 0f) {
+                buildings.remove(e.build, 0f);
+            }
+        });
         //endregion
+    }
+
+    public DamageDisplay() {
+
     }
 
     private static void showZero(Teamc target) {
@@ -182,16 +187,16 @@ public class DamageDisplay {
         damageShowEffect.at(worldx, worldy, 0f, new DamageInfo(0, null, 0f, target.team()));
     }
 
-    private static void showDamage(Integer damage, @Nullable Bullet bullet, Teamc target) {
+    private static void showDamage(float damage, @Nullable Bullet bullet, Teamc target) {
         boolean pierce = bullet != null && bullet.type.pierceArmor;
         float scl = 1 + (Mathf.floor(damage / 200f) / 10f);
-        float worldx = target.x() + Mathf.random(-6f, 6f) * scl;
+        float worldx = target.x() + Mathf.random(-12f, 12f) * scl;
         float worldy = target.y() + Mathf.random(16f, 24f) * scl;
 
         damageShowEffect.at(worldx, worldy, 0f, new DamageInfo(pierce ? 1 : 0, bullet, damage, target.team()));
     }
 
-    private static void showHeal(Integer amount, Teamc target) {
+    private static void showHeal(float amount, Teamc target) {
         float worldx = target.x() + Mathf.random(-6f, 6f);
         float worldy = target.y() + Mathf.random(16f, 24f);
 

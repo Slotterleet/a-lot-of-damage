@@ -5,8 +5,9 @@
     "author": "Slotterleet",
     "main": "alod.ALODMod",
     "description": "A Mindustry mod for showing damage numbers.",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "minGameVersion": 146,
+    "repo": "slotterleet/a-lot-of-damage",
     "java": true,
     "hidden": true
 }
