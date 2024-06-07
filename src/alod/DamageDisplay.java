@@ -34,7 +34,6 @@ public class DamageDisplay {
      */
     public static Effect damageShowEffect = new Effect(60f, 80f, (e) -> {
         DamageInfo data = e.data();
-        var bullet = data.bullet;
         float damage = data.damage;
 
         float dmgScale = Mathf.clamp(1f + damage / 2500, 1f, 5f);
@@ -65,7 +64,7 @@ public class DamageDisplay {
             e.y + (forDraw == null ? 0f : forDraw.getRegion().height * realScale / 4f), Draw.getColor(), realScale, false, Align.left);
 
         // use a string containing word "crit" as bullet data for that satisfying "CRITICAL HIT!!!" text.
-        if (bullet != null && bullet.data instanceof String s && s.contains("crit")) {
+        if (data.crit) {
             var critColor = new Color(e.fin(), e.fout(), 0, e.fout());
             Fonts.def.draw("CRITICAL", e.x, e.y - 16f,
                 critColor, 1f, false, Align.center);
@@ -184,7 +183,7 @@ public class DamageDisplay {
         float worldx = target.x() + Mathf.random(-6f, 6f);
         float worldy = target.y() + Mathf.random(16f, 24f);
 
-        damageShowEffect.at(worldx, worldy, 0f, new DamageInfo(0, null, 0f, target.team()));
+        damageShowEffect.at(worldx, worldy, 0f, new DamageInfo(0, 0f, target.team(), false));
     }
 
     private static void showDamage(float damage, @Nullable Bullet bullet, Teamc target) {
@@ -193,14 +192,16 @@ public class DamageDisplay {
         float worldx = target.x() + Mathf.random(-12f, 12f) * scl;
         float worldy = target.y() + Mathf.random(16f, 24f) * scl;
 
-        damageShowEffect.at(worldx, worldy, 0f, new DamageInfo(pierce ? 1 : 0, bullet, damage, target.team()));
+        damageShowEffect.at(worldx, worldy, 0f, new DamageInfo(pierce ? 1 : 0, damage, target.team(),
+            bullet.data instanceof String s && s.contains("crit")
+        ));
     }
 
     private static void showHeal(float amount, Teamc target) {
         float worldx = target.x() + Mathf.random(-6f, 6f);
         float worldy = target.y() + Mathf.random(16f, 24f);
 
-        damageShowEffect.at(worldx, worldy, 0f, new DamageInfo(2, null, amount, target.team()));
+        damageShowEffect.at(worldx, worldy, 0f, new DamageInfo(2, amount, target.team(), false));
     }
 
     private static void initBuildings() {
@@ -227,15 +228,15 @@ public class DamageDisplay {
 
     static class DamageInfo {
         int type;
-        @Nullable Bullet bullet;
         float damage;
         Team target;
+        boolean crit;
 
-        public DamageInfo(int t, Bullet b, float d, Team target) {
+        public DamageInfo(int t, float d, Team target, boolean crit) {
             type = t;
-            bullet = b;
             damage = d;
             this.target = target;
+            this.crit = crit;
         }
     }
 }

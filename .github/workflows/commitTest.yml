@@ -22,24 +22,25 @@ jobs:
         with:
           name: ${{ github.event.repository.name }}
           path: build/libs/${{ github.event.repository.name }}.jar
-      - name: Make a tag name
-        if: github.ref == 'refs/heads/master'
-        run: |
-          echo "::set-output name=tag::$(jq '.version' mod.json -r)"
-        id: tag_make
-      - name: Create blank release
-        if: github.ref == 'refs/heads/master'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run:
-          gh release create -t "A Lot of Damage!" "${{ steps.tag_make.outputs.tag }}"
-      #    - name: Check mod version
-      #      if: github.ref == 'refs/heads/master'
-      #      run: |
-      #        echo "${{ steps.tag_make.outputs.tag }}"
-      - name: Add jar into release
-        uses: softprops/action-gh-release@v1
-        if: github.ref == 'refs/heads/master'
-        with:
-          tag_name: ${{ steps.tag_make.outputs.tag }}
-          files: build/libs/${{ github.event.repository.name }}.jar
+# FIXME: gh refuses to make releases now.
+#      - name: Make a tag name
+#        if: github.ref == 'refs/heads/master'
+#        run: |
+#          echo "::set-output name=tag::$(jq '.version' mod.json -r)"
+#        id: tag_make
+#      - name: Create blank release
+#        if: github.ref == 'refs/heads/master'
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run:
+#          gh release create -t "A Lot of Damage!" "${{ steps.tag_make.outputs.tag }}"
+#      - name: Check mod version
+#        if: github.ref == 'refs/heads/master'
+#        run: |
+#        echo "${{ steps.tag_make.outputs.tag }}"
+#      - name: Add jar into release
+#        uses: softprops/action-gh-release@v1
+#        if: github.ref == 'refs/heads/master'
+#        with:
+#          tag_name: ${{ steps.tag_make.outputs.tag }}
+#          files: build/libs/${{ github.event.repository.name }}.jar
