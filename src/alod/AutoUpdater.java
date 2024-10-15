@@ -11,6 +11,8 @@ import static mindustry.mod.Mods.LoadedMod;
 public class AutoUpdater {
     public AutoUpdater() {
         LoadedMod mod = mods.getMod(ALODMod.class);
+        if (mod == null) return;
+
         Http.get(ghApi + "/repos/" + mod.getRepo() + "/releases", result -> {
             var json = Jval.read(result.getResultAsString());
             Jval.JsonArray releases = json.asArray();
