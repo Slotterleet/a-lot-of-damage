@@ -1,6 +1,6 @@
 package alod;
 
-import arc.Events;
+import arc.*;
 import arc.util.Log;
 import mindustry.Vars;
 import mindustry.game.EventType.ClientLoadEvent;
@@ -17,6 +17,13 @@ public class ALODMod extends Mod{
 
         Events.on(ClientLoadEvent.class, e -> {
             new AutoUpdater();
+        });
+
+        Vars.ui.settings.addCategory("A Lot of Damage", t -> {
+            t.checkPref("alod-toggle", true, b -> {
+                Core.settings.put("alod-toggle", true);
+                Vars.ui.showOkText("Did You Know?", "You can disable damage numbers by going to Mods section of the main menu, then disabling [accent]A Lot of Damage[] there! You should absolutely try it out!", () -> {});
+            });
         });
     }
 }
